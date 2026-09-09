@@ -21,9 +21,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid signature." }, { status: 400 });
   }
 
-  if (event.livemode) {
-    return NextResponse.json({ error: "Live-mode events are disabled." }, { status: 400 });
-  }
+  
 
   try {
     if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
