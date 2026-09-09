@@ -9,9 +9,13 @@ export async function GET(request: Request) {
   const query = new URL(request.url).searchParams;
   const sessionId = query.get("session_id");
   const resultId = query.get("result_id");
-  if (!sessionId || !sessionId.startsWith("cs_test_") || !isResultId(resultId)) {
-    return NextResponse.json({ error: "Invalid checkout session." }, { status: 400 });
-  }
+if (
+  !sessionId ||
+  (!sessionId.startsWith("cs_test_") && !sessionId.startsWith("cs_live_")) ||
+  !isResultId(resultId)
+) {
+  return NextResponse.json({ error: "Invalid checkout session." }, { status: 400 });
+}
 
   try {
     const session = await getStripe().checkout.sessions.retrieve(sessionId, {
