@@ -11,7 +11,7 @@ The content is educational, entertaining, and reflective. It is not medical care
 - Stripe-hosted Checkout Session for a one-time US$2.99 payment
 - Server-only Stripe secret key
 - Signed Stripe webhook verification using the untouched request body
-- The supplied Stripe test Price (`price_1UDbU8PCmPdZthdIfnAGd6s0`) with quantity 1
+- The Stripe sandbox Price (`price_1UDcAVAqAOj4BahajN8VC6ld`) with quantity 1
 - Paid entitlement written only by a signature-verified Stripe webhook
 - Return to the original quiz result URL, which waits for webhook verification before revealing the report
 - `quiz_type` and `result_id` carried through Checkout metadata and redirect URLs

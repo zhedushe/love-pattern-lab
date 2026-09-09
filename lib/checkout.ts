@@ -1,7 +1,7 @@
 import type Stripe from "stripe";
 import { isValidAnswers, type Language } from "@/lib/quizzes";
 
-export const CHECKOUT_PRICE_ID = "price_1UDbU8PCmPdZthdIfnAGd6s0";
+export const CHECKOUT_PRICE_ID = "price_1UDcAVAqAOj4BahajN8VC6ld";
 export const CHECKOUT_AMOUNT = 299;
 export const CHECKOUT_CURRENCY = "usd";
 
