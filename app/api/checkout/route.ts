@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     const session = await stripe.checkout.sessions.create(
       {
         mode: "payment",
-        ui_mode: "hosted",
+        ui_mode: "hosted_page",
         locale: language,
         line_items: [
           {
