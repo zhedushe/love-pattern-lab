@@ -42,7 +42,6 @@ export function hasExpectedLineItem(session: Stripe.Checkout.Session) {
 
 export function isPaidExpectedCheckout(session: Stripe.Checkout.Session) {
   return Boolean(
-    !session.livemode &&
     session.mode === "payment" &&
     session.status === "complete" &&
     session.payment_status === "paid" &&
