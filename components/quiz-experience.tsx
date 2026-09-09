@@ -4,15 +4,20 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { Language, Quiz } from "@/lib/quizzes";
 import { getTier } from "@/lib/quizzes";
+import { SuccessExperience } from "@/components/success-experience";
 
 export function QuizExperience({
   quiz,
   initialLanguage,
-  paymentCancelled
+  paymentStatus,
+  resultId,
+  sessionId
 }: {
   quiz: Quiz;
   initialLanguage: Language;
-  paymentCancelled: boolean;
+  paymentStatus?: string;
+  resultId?: string;
+  sessionId?: string;
 }) {
   const [language, setLanguage] = useState(initialLanguage);
   const [answers, setAnswers] = useState<(number | null)[]>(quiz.questions.map(() => null));
@@ -40,6 +45,10 @@ export function QuizExperience({
     ? { back: "Todos los tests", intro: "Responde según lo que suele ser cierto, no según lo que quisieras que fuera.", question: "Pregunta", of: "de", view: "Ver mi resultado", free: "Tu resultado gratuito", full: "Desbloquear informe completo", price: "US$2.99 · pago único", includes: ["Lectura detallada de tu patrón", "Puntos fuertes y áreas de atención", "Un experimento práctico", "Pregunta para conversar"], cancel: "El pago se canceló. Tu resultado sigue aquí.", error: "No pudimos iniciar el pago. Inténtalo de nuevo.", disclaimer: "Este test es para autorreflexión, educación y entretenimiento; no es un diagnóstico." }
     : { back: "All quizzes", intro: "Answer for what is usually true—not what you wish were true.", question: "Question", of: "of", view: "See my result", free: "Your free result", full: "Unlock full report", price: "US$2.99 · one-time", includes: ["A deeper reading of your pattern", "Strengths and watch-outs", "One practical experiment", "A conversation prompt"], cancel: "Payment was cancelled. Your result is still here.", error: "We couldn’t start checkout. Please try again.", disclaimer: "This quiz is for self-reflection, education, and entertainment—not diagnosis." };
 
+  if (paymentStatus === "success" && sessionId && resultId) {
+    return <SuccessExperience sessionId={sessionId} resultId={resultId} initialLanguage={initialLanguage} />;
+  }
+
   async function checkout() {
     setLoading(true);
     setError("");
@@ -49,7 +58,7 @@ export function QuizExperience({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quizSlug: quiz.slug, answers, language })
       });
-      const data = (await response.json()) as { url?: string; error?: string };
+      const data = (await response.json()) as { url?: string; resultId?: string; error?: string };
       if (!response.ok || !data.url) throw new Error(data.error);
       window.location.assign(data.url);
     } catch {
@@ -67,7 +76,7 @@ export function QuizExperience({
       </nav>
       <section className="quiz-shell wrap">
         <div className="quiz-intro"><span className="tiny-label">{quiz.number}</span><h1>{quiz.title[language]}</h1><p>{quiz.subtitle[language]}</p><small>{t.intro}</small></div>
-        {paymentCancelled && <div className="notice">{t.cancel}</div>}
+        {paymentStatus === "cancelled" && <div className="notice">{t.cancel}</div>}
         {!showResult ? (
           <div className="question-list">
             {quiz.questions.map((question, index) => (

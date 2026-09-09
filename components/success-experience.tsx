@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import type { Language, ReportSection } from "@/lib/quizzes";
 
 type PaidReport = {
@@ -12,10 +11,16 @@ type PaidReport = {
   sections: ReportSection[];
 };
 
-export function SuccessExperience() {
-  const params = useSearchParams();
-  const sessionId = params.get("session_id");
-  const language: Language = params.get("lang") === "es" ? "es" : "en";
+export function SuccessExperience({
+  sessionId,
+  resultId,
+  initialLanguage
+}: {
+  sessionId: string;
+  resultId: string;
+  initialLanguage: Language;
+}) {
+  const language = initialLanguage;
   const [state, setState] = useState<"waiting" | "paid" | "failed">(sessionId ? "waiting" : "failed");
   const [report, setReport] = useState<PaidReport | null>(null);
   const t = language === "es"
@@ -29,7 +34,7 @@ export function SuccessExperience() {
     async function check() {
       attempts += 1;
       try {
-        const response = await fetch(`/api/entitlement?session_id=${encodeURIComponent(sessionId!)}`, { cache: "no-store" });
+        const response = await fetch(`/api/entitlement?session_id=${encodeURIComponent(sessionId)}&result_id=${encodeURIComponent(resultId)}`, { cache: "no-store" });
         const data = await response.json() as { status?: string; report?: PaidReport };
         if (data.status === "paid" && data.report) {
           if (!cancelled) { setReport(data.report); setState("paid"); }
@@ -46,7 +51,7 @@ export function SuccessExperience() {
     }
     check();
     return () => { cancelled = true; };
-  }, [sessionId]);
+  }, [resultId, sessionId]);
 
   if (state === "waiting") return (
     <main className="status-page"><div className="status-card"><div className="spinner" /><h1>{t.waiting}</h1><p>{t.waitCopy}</p></div></main>

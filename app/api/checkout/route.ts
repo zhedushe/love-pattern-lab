@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createOrder, attachStripeSession } from "@/lib/order-store";
+import { randomUUID } from "node:crypto";
+import { CHECKOUT_PRICE_ID } from "@/lib/checkout";
 import { getQuiz, isValidAnswers, type Language } from "@/lib/quizzes";
 import { getStripe } from "@/lib/stripe";
 
@@ -26,39 +27,34 @@ export async function POST(request: Request) {
     }
 
     const stripe = getStripe();
-    const order = await createOrder({ quizSlug, answers: body.answers, language });
+    const resultId = randomUUID();
     const origin = safeOrigin(request);
     const session = await stripe.checkout.sessions.create(
       {
         mode: "payment",
+        ui_mode: "hosted",
         locale: language,
         line_items: [
           {
             quantity: 1,
-            price_data: {
-              currency: "usd",
-              unit_amount: 299,
-              product_data: {
-                name: language === "es" ? `Love Pattern Lab — Informe completo: ${quiz.title.es}` : `Love Pattern Lab — Full report: ${quiz.title.en}`,
-                description:
-                  language === "es"
-                    ? "Informe digital personalizado de autorreflexión"
-                    : "Personalized digital self-reflection report"
-              }
-            }
+            price: CHECKOUT_PRICE_ID
           }
         ],
-        client_reference_id: order.id,
-        metadata: { orderId: order.id, quizSlug },
-        success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}&lang=${language}`,
-        cancel_url: `${origin}/quiz/${quizSlug}?lang=${language}&payment=cancelled`
+        client_reference_id: resultId,
+        metadata: {
+          result_id: resultId,
+          quiz_type: quizSlug,
+          answers: JSON.stringify(body.answers),
+          language
+        },
+        success_url: `${origin}/quiz/${quizSlug}?lang=${language}&payment=success&result_id=${resultId}&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${origin}/quiz/${quizSlug}?lang=${language}&payment=cancelled&result_id=${resultId}`
       },
-      { idempotencyKey: `checkout_${order.id}` }
+      { idempotencyKey: `checkout_${resultId}` }
     );
 
     if (!session.url) throw new Error("Stripe did not return a Checkout URL.");
-    await attachStripeSession(order.id, session.id);
-    return NextResponse.json({ url: session.url });
+    return NextResponse.json({ url: session.url, resultId });
   } catch (error) {
     console.error("Checkout creation failed", error instanceof Error ? error.message : error);
     return NextResponse.json(

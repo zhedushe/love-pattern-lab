@@ -1,13 +1,9 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { markOrderFailed, markOrderPaid } from "@/lib/order-store";
+import { isPaidExpectedCheckout } from "@/lib/checkout";
 import { getStripe } from "@/lib/stripe";
 
 export const runtime = "nodejs";
-
-function paymentIntentId(session: Stripe.Checkout.Session) {
-  return typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id;
-}
 
 export async function POST(request: Request) {
   const signature = request.headers.get("stripe-signature");
@@ -25,18 +21,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid signature." }, { status: 400 });
   }
 
+  if (event.livemode) {
+    return NextResponse.json({ error: "Live-mode events are disabled." }, { status: 400 });
+  }
+
   try {
     if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
-      const session = event.data.object;
-      const orderId = session.metadata?.orderId;
-      if (orderId && session.payment_status === "paid") {
-        await markOrderPaid(orderId, session.id, paymentIntentId(session));
+      const eventSession = event.data.object;
+      const session = await getStripe().checkout.sessions.retrieve(eventSession.id, {
+        expand: ["line_items"]
+      });
+      if (isPaidExpectedCheckout(session)) {
+        await getStripe().checkout.sessions.update(session.id, {
+          metadata: {
+            ...session.metadata,
+            webhook_verified: event.id,
+            webhook_verified_at: new Date(event.created * 1000).toISOString()
+          }
+        });
       }
-    }
-    if (event.type === "checkout.session.async_payment_failed") {
-      const session = event.data.object;
-      const orderId = session.metadata?.orderId;
-      if (orderId) await markOrderFailed(orderId, session.id);
     }
     return NextResponse.json({ received: true });
   } catch (error) {

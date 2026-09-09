@@ -1,6 +1,5 @@
-import { Suspense } from "react";
-import { SuccessExperience } from "@/components/success-experience";
+import { redirect } from "next/navigation";
 
 export default function SuccessPage() {
-  return <Suspense fallback={<main className="status-page"><div className="spinner" /></main>}><SuccessExperience /></Suspense>;
+  redirect("/");
 }
