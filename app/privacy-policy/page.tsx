@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { LegalPage } from "@/components/legal-page";
 
 export default function PrivacyPolicy() {
@@ -10,6 +11,6 @@ export default function PrivacyPolicy() {
     <h2>Service providers and retention</h2>
     <p>We use hosting and payment providers, including Vercel and Stripe, to operate the site. Information is retained only as reasonably necessary for service delivery, security, accounting, and legal compliance.</p>
     <h2>Your choices</h2>
-    <p>You may stop using the service at any time. For privacy questions or requests, use our <a href="/contact">Contact page</a>.</p>
+    <p>You may stop using the service at any time. For privacy questions or requests, use our <Link href="/contact">Contact page</Link>.</p>
   </LegalPage>;
 }

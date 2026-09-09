@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { LegalPage } from "@/components/legal-page";
 
 export default function Terms() {
@@ -12,6 +13,6 @@ export default function Terms() {
     <h2>Availability and liability</h2>
     <p>The service is provided as available without guarantees of uninterrupted operation. To the extent permitted by law, Love Pattern Lab is not liable for indirect or consequential losses arising from use of the service.</p>
     <h2>Questions</h2>
-    <p>For terms or purchase questions, use our <a href="/contact">Contact page</a>.</p>
+    <p>For terms or purchase questions, use our <Link href="/contact">Contact page</Link>.</p>
   </LegalPage>;
 }

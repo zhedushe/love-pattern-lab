@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { CHECKOUT_PRICE_ID } from "@/lib/checkout";
-import { getQuiz, isValidAnswers, type Language } from "@/lib/quizzes";
+import { getPatternResult, getQuiz, getQuizPath, isValidAnswers, type Language } from "@/lib/quizzes";
 import { getStripe } from "@/lib/stripe";
 
 export const runtime = "nodejs";
@@ -29,6 +29,9 @@ export async function POST(request: Request) {
     const stripe = getStripe();
     const resultId = randomUUID();
     const origin = safeOrigin(request);
+    const patterns = getPatternResult(quizSlug, body.answers);
+    const returnPath = getQuizPath(quizSlug, language);
+    const separator = returnPath.includes("?") ? "&" : "?";
     const session = await stripe.checkout.sessions.create(
       {
         mode: "payment",
@@ -45,10 +48,11 @@ export async function POST(request: Request) {
           result_id: resultId,
           quiz_type: quizSlug,
           answers: JSON.stringify(body.answers),
-          language
+          language,
+          ...(patterns ? { primary_pattern: patterns.primary, secondary_pattern: patterns.secondary } : {})
         },
-        success_url: `${origin}/quiz/${quizSlug}?lang=${language}&payment=success&result_id=${resultId}&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${origin}/quiz/${quizSlug}?lang=${language}&payment=cancelled&result_id=${resultId}`
+        success_url: `${origin}${returnPath}${separator}payment=success&result_id=${resultId}&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${origin}${returnPath}${separator}payment=cancelled&result_id=${resultId}`
       },
       { idempotencyKey: `checkout_${resultId}` }
     );

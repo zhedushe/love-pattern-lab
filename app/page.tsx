@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { LanguageToggle } from "@/components/language-toggle";
-import { quizzes, type Language } from "@/lib/quizzes";
+import { getQuizPath, quizzes, type Language } from "@/lib/quizzes";
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ lang?: string }> }) {
   const params = await searchParams;
@@ -56,7 +56,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ l
 
       <section className="quiz-section" id="quizzes">
         <div className="wrap">
-          <div className="section-heading"><h2>{t.explore}</h2><span>01 — 03</span></div>
+          <div className="section-heading"><h2>{t.explore}</h2><span>01 — 04</span></div>
           <div className="quiz-grid">
             {quizzes.map((quiz) => (
               <article className={`quiz-card ${quiz.accent}`} key={quiz.slug}>
@@ -65,8 +65,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ l
                 <h3>{quiz.title[language]}</h3>
                 <p>{quiz.subtitle[language]}</p>
                 <div className="card-footer">
-                  <span>{t.time}</span>
-                  <Link href={`/quiz/${quiz.slug}?lang=${language}`}>{t.cta} →</Link>
+                  <span>{quiz.estimatedTime?.[language] || t.time}</span>
+                  <Link href={getQuizPath(quiz.slug, language)}>{quiz.startCta?.[language] || t.cta} →</Link>
                 </div>
               </article>
             ))}

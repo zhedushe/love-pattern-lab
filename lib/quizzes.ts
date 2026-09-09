@@ -1,3 +1,13 @@
+import {
+  buildPullAwayPaidResult,
+  getPullAwayFreeResult,
+  pullAwayQuiz,
+  scorePullAway,
+  type PatternId,
+  type PatternScores,
+  type PullAwayFreeResult
+} from "./pull-away.ts";
+
 export type Language = "en" | "es";
 export type Localized = { en: string; es: string };
 export type Quiz = {
@@ -7,7 +17,12 @@ export type Quiz = {
   title: Localized;
   subtitle: Localized;
   questions: Localized[];
-  scale: { low: Localized; high: Localized };
+  scale: { low: Localized; high: Localized; options?: Localized[] };
+  meta?: Localized;
+  startCta?: Localized;
+  disclaimer?: Localized;
+  estimatedTime?: Localized;
+  resultMode?: "tier" | "pattern";
 };
 
 export type ReportSection = { heading: string; body: string };
@@ -75,11 +90,19 @@ export const quizzes: Quiz[] = [
       { en: "Warm, welcome touch helps me settle.", es: "El contacto cálido y bienvenido me ayuda a relajarme." },
       { en: "Being remembered in small details matters to me.", es: "Que recuerden pequeños detalles sobre mí es importante." }
     ]
-  }
+  },
+  pullAwayQuiz
 ];
 
 export function getQuiz(slug: string) {
   return quizzes.find((quiz) => quiz.slug === slug);
+}
+
+export function getQuizPath(slug: string, language: Language) {
+  if (slug === "why-do-you-pull-away") {
+    return language === "es" ? "/es/tests/por-que-te-alejas" : "/en/tests/why-do-you-pull-away";
+  }
+  return `/quiz/${slug}?lang=${language}`;
 }
 
 export function getTier(answers: number[]) {
@@ -159,6 +182,7 @@ const copy = {
 export function buildResult(slug: string, answers: number[], language: Language) {
   const quiz = getQuiz(slug);
   if (!quiz) throw new Error("Unknown quiz");
+  if (quiz.resultMode === "pattern") return buildPullAwayPaidResult(answers, language);
   const tier = getTier(answers);
   const localized = copy[language][tier];
   return {
@@ -169,6 +193,20 @@ export function buildResult(slug: string, answers: number[], language: Language)
     sections: localized.sections.map(([heading, body]) => ({ heading, body })) as ReportSection[]
   };
 }
+
+export function buildFreeResult(slug: string, answers: number[], language: Language): PullAwayFreeResult | null {
+  const quiz = getQuiz(slug);
+  if (!quiz || quiz.resultMode !== "pattern") return null;
+  return getPullAwayFreeResult(answers, language);
+}
+
+export function getPatternResult(slug: string, answers: number[]): { primary: PatternId; secondary: PatternId; scores: PatternScores } | null {
+  const quiz = getQuiz(slug);
+  if (!quiz || quiz.resultMode !== "pattern") return null;
+  return scorePullAway(answers);
+}
+
+export type { PatternId, PatternScores, PullAwayFreeResult } from "./pull-away.ts";
 
 export function isValidAnswers(slug: string, value: unknown): value is number[] {
   const quiz = getQuiz(slug);

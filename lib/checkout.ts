@@ -1,5 +1,5 @@
 import type Stripe from "stripe";
-import { isValidAnswers, type Language } from "@/lib/quizzes";
+import { getPatternResult, isValidAnswers, type Language, type PatternId } from "@/lib/quizzes";
 
 export const CHECKOUT_PRICE_ID = "price_1UDbU8PCmPdZthdIfnAGd6s0";
 export const CHECKOUT_AMOUNT = 299;
@@ -10,6 +10,8 @@ export type CheckoutMetadata = {
   quizType: string;
   answers: number[];
   language: Language;
+  primaryPattern?: PatternId;
+  secondaryPattern?: PatternId;
 };
 
 export function isResultId(value: string | null | undefined): value is string {
@@ -25,7 +27,9 @@ export function readCheckoutMetadata(session: Stripe.Checkout.Session): Checkout
   try {
     const answers = JSON.parse(session.metadata?.answers || "") as unknown;
     if (!isValidAnswers(quizType, answers)) return null;
-    return { resultId, quizType, answers, language };
+    const patterns = getPatternResult(quizType, answers);
+    if (patterns && (session.metadata?.primary_pattern !== patterns.primary || session.metadata?.secondary_pattern !== patterns.secondary)) return null;
+    return { resultId, quizType, answers, language, ...(patterns ? { primaryPattern: patterns.primary, secondaryPattern: patterns.secondary } : {}) };
   } catch {
     return null;
   }
